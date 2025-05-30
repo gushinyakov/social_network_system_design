@@ -1,0 +1,246 @@
+openapi: '3.0.4'
+info:
+  title: API социальной сети для курса по System Design
+  version: '1.0'
+servers:
+  - url: https://balun.courses/courses/system_design
+paths:
+  /post/publish/photo:
+    post:
+      summary: Сначала загружаются фотографии, затем публикуется пост
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: array
+              items:
+                type: string
+                format: binary
+                maxItems: 5
+                maxLength: 500000
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      type: string
+                      format: uri
+                      description: Ссылка на фотографию
+        '400':
+          description: Bad Request
+  /post/publish/content:
+    post:
+      summary: Публикация контента к посту
+      requestBody:
+        required: true
+        content:
+          application/json: 
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Текст поста
+                links:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                    description: Ссылка на фотографию
+                    maxItems: 5
+                location:
+                  $ref: '#/components/schemas/Location'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+
+  /post/search:
+    get:
+      summary: Поиск постов
+      parameters:
+        - name: location-name
+          in: query
+          required: true
+          description: Название локации
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 255
+        - name: page
+          in: query
+          required: true
+          description: Страница
+          schema:
+            type: integer
+            minimum: 0
+        - name: size
+          in: query
+          required: true
+          description: Количество постов на странице
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+        '400':
+          description: Bad Request
+
+  /post/feed:
+    get:
+      summary: Получение ленты постов
+      parameters:
+        - name: page
+          in: query
+          required: true
+          description: Страница
+          schema:
+            type: integer
+            minimum: 0
+        - name: size
+          in: query
+          required: true
+          description: Количество постов на странице
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+        '400':
+          description: Bad Request
+
+  /post/{id}/like:
+    post:
+      summary: Лайк поста
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID поста
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: true
+          description: Статус лайка
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+  
+  /post/{id}/comment:
+    post:
+      summary: Комментирование поста
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID поста
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Текст комментария
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+
+
+
+components:
+  schemas:
+
+    PaginatedResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Страница
+        size:
+          type: integer
+          description: Количество постов на странице
+        content:
+          type: array
+          items:
+            type: object
+
+    Location:
+      type: object
+      properties:
+        latitude:
+          type: number
+          description: Широта
+        longitude:
+          type: number
+          description: Долгота
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID поста
+        location:
+          $ref: '#/components/schemas/Location'
+        author:
+          type: string
+          description: Автор поста
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания поста
+        text:
+          type: string
+          description: Текст поста
+        links:
+          type: array
+          items:
+            type: string
+
+    
