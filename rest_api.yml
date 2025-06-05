@@ -5,9 +5,9 @@ info:
 servers:
   - url: https://balun.courses/courses/system_design
 paths:
-  /post/publish/photo:
+  /posts/photo:
     post:
-      summary: Сначала загружаются фотографии, затем публикуется пост
+      summary: Загрузка фотографий к посту
       requestBody:
         required: true
         content:
@@ -35,7 +35,7 @@ paths:
                       description: Ссылка на фотографию
         '400':
           description: Bad Request
-  /post/publish/content:
+  /posts/content:
     post:
       summary: Публикация контента к посту
       requestBody:
@@ -63,13 +63,13 @@ paths:
         '400':
           description: Bad Request
 
-  /post/search:
+  /posts:
     get:
-      summary: Поиск постов
+      summary: Загрузка постов
       parameters:
         - name: location-name
           in: query
-          required: true
+          required: false
           description: Название локации
           schema:
             type: string
@@ -107,43 +107,7 @@ paths:
         '400':
           description: Bad Request
 
-  /post/feed:
-    get:
-      summary: Получение ленты постов
-      parameters:
-        - name: page
-          in: query
-          required: true
-          description: Страница
-          schema:
-            type: integer
-            minimum: 0
-        - name: size
-          in: query
-          required: true
-          description: Количество постов на странице
-          schema:
-            type: integer
-            minimum: 5
-            maximum: 50
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
-                  - type: object
-                    properties:
-                      content:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Post'
-        '400':
-          description: Bad Request
-
-  /post/{id}/like:
+  /posts/{id}/reaction:
     post:
       summary: Лайк поста
       parameters:
@@ -165,7 +129,28 @@ paths:
         '400':
           description: Bad Request
   
-  /post/{id}/comment:
+  /posts/{id}/comments:
+    get:
+      summary: Загрузка комментариев к посту
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID поста
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostComment'
+        '400':
+          description: Bad Request
+
     post:
       summary: Комментирование поста
       parameters:
@@ -190,8 +175,78 @@ paths:
           description: OK
         '400':
           description: Bad Request
-
-
+  
+  /users/{id}/subscriptions:
+    get:
+      summary: Загрузка подписок пользователя
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID пользователя
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSubscription'
+        '400':
+          description: Bad Request
+    post:
+      summary: Подписка на пользователя
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID пользователя
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+    delete:
+      summary: Отписка от пользователя
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID пользователя
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+  
+  /users/{id}/followers:
+    get:
+      summary: Загрузка подписчиков пользователя
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID пользователя
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserFollower'
+        '400':
+          description: Bad Request
 
 components:
   schemas:
@@ -243,4 +298,52 @@ components:
           items:
             type: string
 
-    
+    PostComment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID комментария
+        author:
+          type: string
+          description: Автор комментария
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания комментария
+        text:
+          type: string
+          description: Текст комментария
+
+    UserSubscription:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID подписки
+        user:
+          type: string
+          description: ID пользователя
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания подписки
+        notifyOnNewPosts:
+          type: boolean
+          description: Уведомлять о новых постах
+
+    UserFollower:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID подписчика
+        user:
+          type: string
+          description: ID пользователя
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания подписки
+        
+        
